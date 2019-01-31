@@ -1,19 +1,19 @@
 ########################################################################
 # ay18t2-smt203-asm-01
 # team members:
-# 	1.
-# 	2. 
+# 	1. KHIEW PEI YU
+# 	2. HAO BOWEN
 ########################################################################
 
 import requests
 import json
-import datetime, time 
+import datetime
 
 ########################################################################
 # global variables 
 ########################################################################
 
-my_token = '' # put your secret Telegram token here 
+my_token = '797824642:AAFJicifpPwaeQ0FpdfliQOoAtoGV_cUISw' # put your secret Telegram token here 
 url_base = 'https://api.telegram.org/bot{}/'.format(my_token)
 
 url_busArrival = 'http://datamall2.mytransport.sg/ltaodataservice/BusArrivalv2'
@@ -21,11 +21,11 @@ url_busArrival = 'http://datamall2.mytransport.sg/ltaodataservice/BusArrivalv2'
 # mall must include headers, for example: 
 # r = requests.get(url=url_busArrival, headers=headers, params=params)
 headers = {
-	'AccountKey': '', # enter your account key here (check your email when you sign up in LTA data mall) 
+	'AccountKey': 'NMy3IJW0Qq6ZmHW+EMg8/Q==', # enter your account key here (check your email when you sign up in LTA data mall) 
 	'accept': 'application/json'
 }
 
-chat_id = '' # please type in your Telegram user chat id here  
+chat_id = '797824642' # please type in your Telegram user chat id here  
 
 ########################################################################
 # Telegram method URLs
@@ -45,19 +45,103 @@ def send_welcome(chat_id):
 	return 
 	
 def compute_busarrival(estimated_arrival):
+	"""
+	Returning a h:mm:ss or -2
+	-2 means that the bus had just left
+	0:34:00 stands for H:MM:SS
+	"""
 	time_diff = ''
 	# write code here
+	print('ETA: ' + estimated_arrival)
+
+	# Getting current time
+	current_t = datetime.datetime.now()
+	print('CRT: ' + str(current_t))
+
+	# Changing ETA into datetime.datetime form
+	est_t = datetime.datetime.strptime(estimated_arrival[:-6], "%Y-%m-%dT%H:%M:%S")
+	print('ETA: ' + str(est_t))
+
+	# calculating estmated time or arrival
+
+	eta_r = est_t - current_t
+	print('DLT: ' + str(eta_r))
+	print(str(eta_r))
+
 	# Hint: you may also want to use try.. except for error handling, if necessary
-	return time_diff
+	# return time_diff
+	if str(eta_r) == '-':
+		return -2
+	return (str(eta_r)[:8])
+
+def construct_msg(bus_dict):
+	"""returning a message which is designed for Telegram
+	"""
+	return
+
+def get_busarrival_dict(bus_list):
+	"""
+	creating a dictionary of incoming bus in the following form
+	incoming_bus{
+		'147': [0:08:31, 0:14:00, 0:15:00],
+		'857': [-2, 0:08:00, 0:16:00],
+		'133': [-2, -2, -1]
+	}
+	-1 means that there is no further bus service
+	-2 means that the bus had just left
+	0:34:00 stands for H:MM:SS
+	"""
+	incoming_bus={}
+
+	for bus in bus_list:  #iterating through every bus that is listed in the array 'Services'
+		incoming_bus[bus['ServiceNo']] = [compute_busarrival(bus["NextBus"]['EstimatedArrival'])]
+		if bus["NextBus2"]['EstimatedArrival'] != "" :
+			incoming_bus[bus['ServiceNo']].append(compute_busarrival(bus["NextBus2"]['EstimatedArrival']))
+		else:
+			incoming_bus[bus['ServiceNo']].append(-1)
+		if bus["NextBus3"]['EstimatedArrival'] != "" :
+			incoming_bus[bus['ServiceNo']].append(compute_busarrival(bus["NextBus3"]['EstimatedArrival']))
+		else:
+			incoming_bus[bus['ServiceNo']].append(-1)
+	return (incoming_bus)
 
 def get_busarrival_api(bus_stop_code):
 	msg = ''
 	# write code here
+	params = {
+		'BusStopCode': bus_stop_code,
+		'ServiceNo': ''
+		# kept empty if not specified 
+	}
+
+	# Getting bus info from LTA 
+	r = requests.get(url=url_busArrival, headers=headers, params=params)
+
+	#abstructing bus services 
+	bus_srvs = get_busarrival_dict(r.json()['Services'])
+
+	# incoming_buses = r.json()['Services']
+	# print(json.dumps(incoming_buses, sort_keys=True, indent=4))
+
+	# the following part is used to print out the ETA information in terminal 
+	if bus_srvs != {} :
+		for k, v in bus_srvs.items():
+			print(k)
+			for j in v:
+				print(j)
+	else:
+		print("Too late alr,no bus services avaliable")
+
+	msg = construct_msg(bus_srvs)
+
 	return msg 
 	
 def listen_and_reply(chat_id):
 	# write code here 
 	return 
 
-send_welcome(chat_id)	
-listen_and_reply(chat_id)
+# send_welcome(chat_id)	
+# listen_and_reply(chat_id)
+
+get_busarrival_api(60141)
+#print(datetime.datetime.now())
