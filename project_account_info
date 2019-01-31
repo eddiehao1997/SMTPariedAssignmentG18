@@ -1,0 +1,9 @@
+Project detail:
+  SMT203 pair assignment 1 Group 18
+
+'API_keys': {
+  'LTA_API_Account_Key': 'NMy3IJW0Qq6ZmHW+EMg8/Q==',
+  'Telegram_API_Token': '797824642:AAFJicifpPwaeQ0FpdfliQOoAtoGV_cUISw',
+  'Telegram_bot_username': '@SMTBus_bot', 
+  'Telegram_bot_name': 'SMTBusStopService'
+}
