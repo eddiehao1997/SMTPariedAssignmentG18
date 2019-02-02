@@ -42,6 +42,10 @@ url_sendMsg = '{}sendMessage'.format(url_base)
 
 def send_welcome(chat_id):
 	# write code here 
+	return
+	
+def listen_and_reply(chat_id):
+	# write code here 
 	return 
 	
 def compute_busarrival(estimated_arrival):
@@ -52,40 +56,61 @@ def compute_busarrival(estimated_arrival):
 	"""
 	time_diff = ''
 	# write code here
-	print('ETA: ' + estimated_arrival)
+	# print('ETA: ' + estimated_arrival)
 
 	# Getting current time
 	current_t = datetime.datetime.now()
-	print('CRT: ' + str(current_t))
+	# print('CRT: ' + str(current_t))
 
 	# Changing ETA into datetime.datetime form
 	est_t = datetime.datetime.strptime(estimated_arrival[:-6], "%Y-%m-%dT%H:%M:%S")
-	print('ETA: ' + str(est_t))
+	# print('ETA: ' + str(est_t))
 
-	# calculating estmated time or arrival
-
-	eta_r = est_t - current_t
-	print('DLT: ' + str(eta_r))
-	print(str(eta_r))
+	# calculating estmated time or arrival]
+	eta_r = (est_t - current_t)
+	# print('DLT: ' + str(eta_r))
+	# print(str(eta_r))
 
 	# Hint: you may also want to use try.. except for error handling, if necessary
 	# return time_diff
-	if str(eta_r) == '-':
+	if str(eta_r)[0] == '-':
+  		# -2 means that the bus "should" have passed the bus stop based on the estmated_arrival time
 		return -2
-	return (str(eta_r)[:8])
+	# return estimated arrival time in minutes 
+	return (int(str(eta_r)[0]) * 60 + int(str(eta_r)[2 : 4]))
 
 def construct_msg(bus_dict):
 	"""returning a message which is designed for Telegram
+	In the form of 'bus_No.: eta1 eta2 eta3'
+	No.123: Arr   09min 15min 
+	No.12:  03min 14min 21min
+	No.143: Arr   09min 15min 
+	No.12:  03min 14min 21min
 	"""
-	return
+	msg =''
+	if bus_dict != {} :
+		for bus_No, time_list in bus_dict.items():
+			msg += '{:8}'.format('No.' + bus_No + ':')
+			for time_min in time_list:
+				if time_min == -1 :
+					msg += ' ' * 6
+				elif time_min >= 1 :
+					msg += '{:0>5}'.format(str(time_min) + 'min') + ' '
+				else:
+					msg += '{:6}'.format('Arr')
+			msg += '\n'
+	else:
+		msg = "Too late alr,no bus services avaliable"
+	
+	return msg
 
 def get_busarrival_dict(bus_list):
 	"""
-	creating a dictionary of incoming bus in the following form
+	Return a dictionary of incoming bus in the following form
 	incoming_bus{
-		'147': [0:08:31, 0:14:00, 0:15:00],
-		'857': [-2, 0:08:00, 0:16:00],
-		'133': [-2, -2, -1]
+		string : [int, int, int],
+		'147': [08:31, 14:00, 15:00],
+		'857': [-2, 08:00, -1]
 	}
 	-1 means that there is no further bus service
 	-2 means that the bus had just left
@@ -105,43 +130,28 @@ def get_busarrival_dict(bus_list):
 			incoming_bus[bus['ServiceNo']].append(-1)
 	return (incoming_bus)
 
-def get_busarrival_api(bus_stop_code):
+def get_busarrival_api(bus_stop_code, bus_svc_no = ''):
 	msg = ''
 	# write code here
 	params = {
 		'BusStopCode': bus_stop_code,
-		'ServiceNo': ''
-		# kept empty if not specified 
+		'ServiceNo': bus_svc_no
 	}
 
 	# Getting bus info from LTA 
 	r = requests.get(url=url_busArrival, headers=headers, params=params)
 
-	#abstructing bus services 
+	# Choosing bus services info 
 	bus_srvs = get_busarrival_dict(r.json()['Services'])
-
 	# incoming_buses = r.json()['Services']
 	# print(json.dumps(incoming_buses, sort_keys=True, indent=4))
 
-	# the following part is used to print out the ETA information in terminal 
-	if bus_srvs != {} :
-		for k, v in bus_srvs.items():
-			print(k)
-			for j in v:
-				print(j)
-	else:
-		print("Too late alr,no bus services avaliable")
-
+	# constructing message designed for Telegram
 	msg = construct_msg(bus_srvs)
-
+	print(msg)
 	return msg 
 	
-def listen_and_reply(chat_id):
-	# write code here 
-	return 
 
 # send_welcome(chat_id)	
 # listen_and_reply(chat_id)
-
 get_busarrival_api(60141)
-#print(datetime.datetime.now())
