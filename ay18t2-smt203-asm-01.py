@@ -42,6 +42,8 @@ url_sendMsg = '{}sendMessage'.format(url_base)
 
 def send_welcome(chat_id):
 	# write code here 
+	bus_msg = get_busarrival_api(60141)
+
 	return
 	
 def listen_and_reply(chat_id):
@@ -50,9 +52,9 @@ def listen_and_reply(chat_id):
 	
 def compute_busarrival(estimated_arrival):
 	"""
-	Returning a h:mm:ss or -2
+	Returning an integer
 	-2 means that the bus had just left
-	0:34:00 stands for H:MM:SS
+	other wise stands for minutes before the next arrival
 	"""
 	time_diff = ''
 	# write code here
@@ -90,17 +92,17 @@ def construct_msg(bus_dict):
 	msg =''
 	if bus_dict != {} :
 		for bus_No, time_list in bus_dict.items():
-			msg += '{:8}'.format('No.' + bus_No + ':')
+			msg += '{:8}'.format('No.' + bus_No + ':') # bus service No.
 			for time_min in time_list:
 				if time_min == -1 :
-					msg += ' ' * 6
-				elif time_min >= 1 :
-					msg += '{:0>5}'.format(str(time_min) + 'min') + ' '
+					msg += 'N.A.  '
+				elif time_min >= 2 :
+					msg += '{:0>5}'.format(str(time_min) + 'min') + ' '  # time info
 				else:
 					msg += '{:6}'.format('Arr')
 			msg += '\n'
 	else:
-		msg = "Too late alr,no bus services avaliable"
+		msg = "Too late alr,no bus services avaliable :("
 	
 	return msg
 
@@ -131,8 +133,15 @@ def get_busarrival_dict(bus_list):
 	return (incoming_bus)
 
 def get_busarrival_api(bus_stop_code, bus_svc_no = ''):
+	"""returning a message which is designed for Telegram
+	with user's input of bus_stop No. and bus_svc No.
+	In the form of 'bus_No.: eta1 eta2 eta3'
+	No.123: Arr   09min 15min 
+	No.12:  03min 14min 21min
+	No.143: Arr   09min 15min 
+	No.12:  03min 14min 21min
+	"""
 	msg = ''
-	# write code here
 	params = {
 		'BusStopCode': bus_stop_code,
 		'ServiceNo': bus_svc_no
@@ -148,10 +157,10 @@ def get_busarrival_api(bus_stop_code, bus_svc_no = ''):
 
 	# constructing message designed for Telegram
 	msg = construct_msg(bus_srvs)
-	print(msg)
+	# print(msg)
 	return msg 
 	
 
 # send_welcome(chat_id)	
 # listen_and_reply(chat_id)
-get_busarrival_api(60141)
+print(get_busarrival_api(60141))
