@@ -8,6 +8,7 @@
 import requests
 import json
 import datetime
+import keyboard
 
 ########################################################################
 # LTA methord URLs & Headers
@@ -57,16 +58,20 @@ def process_msg(msg_dict):
 
 	# Geting message details from msg_dict 
 	sender_id = msg_dict['from']['id']
-	text = msg_dict['text'].split('\n')
 	
 	# Analysing 'text' content 
-	try:
-		msg_type = msg_dict['entities'][0]['type'] 
-	except KeyError:
-		try: 
-			msg = get_busarrival_info(text[0], text[1])
+	try: 
+		text = msg_dict['text'].split('\n')
+		msg = get_busarrival_info(text[0], text[1])
+	except IndexError:
+		try:
+			text = msg_dict['text'].split(' ')
+			msg = get_busarrival_info(text[0], text[1]) 
 		except IndexError:
-			msg = get_busarrival_info(text[0]) 
+			try :
+				msg = get_busarrival_info(text[0])
+			except:
+				print('Opps... something is going wrong. Please re-enter your request ;)')
 
 	# constructing parameter for the Telegram API request
 	sendMessage_para = {
@@ -104,7 +109,7 @@ def listen_and_record():
 	unread_msg = r.json()['result']
 
 	# Printing Unread messages
-	print(json.dumps(unread_msg, sort_keys=True, indent=4))
+	# print(json.dumps(unread_msg, sort_keys=True, indent=4))
 
 	# Processing each item in the 'result' 
 	for msg_detail in unread_msg:
@@ -231,13 +236,16 @@ def get_busarrival_info(bus_stop_code, bus_svc_no = ''):
 	bus_srvs = construct_busarrival_dict(r.json()['Services'])
 
 	# Printing incoming Bus info
-	print(json.dumps(r.json(), sort_keys=True, indent=4))
+	# print(json.dumps(r.json(), sort_keys=True, indent=4))
 
 	# constructing message designed for Telegram
 	msg = construct_msg(bus_srvs)
 	# print(msg)
 	return msg 
 
-listen_and_record()
 
+print('G18A1 Online')
+while not keyboard.is_pressed('q'):
+	listen_and_record()
+# listen_and_record()
 # print(get_busarrival_info(283457))
